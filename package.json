@@ -1,5 +1,5 @@
 {
-  "name": "chat-app",
+  "name": "Boing-Box",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -12,7 +12,7 @@
     "mern",
     "chat-app"
   ],
-  "author": "harsha Agarwal",
+  "author": "harsha Vardhan",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
