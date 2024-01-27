@@ -30,6 +30,7 @@ app.use("/api/messages", messageRoutes);
 
 // --------------------------deployment------------------------------
 
+const path = require('path');
 const __dirname1 = path.resolve();
 
 if (process.env.NODE_ENV === "production") {
