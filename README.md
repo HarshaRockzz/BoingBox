@@ -1,11 +1,6 @@
 # Boing-Box - Chat Application 
 Boing-Box is chat application build with the power of MERN Stack.
 
-
-![login page](./images/Boing-Box_login.png)
-
-![home page](./images/Boing-Box.png)
-
 ## Installation Guide
 
 ### Requirements
