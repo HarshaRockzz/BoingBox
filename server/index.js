@@ -7,11 +7,11 @@ const app = express();
 const socket = require("socket.io");
 require("dotenv").config();
 
+// Accessing the environment variable MONGO_URI
+const mongoConnectionString = process.env.MONGO_URI;
+
 app.use(cors());
 app.use(express.json());
-
-// Replace <password> with your actual MongoDB password
-const mongoConnectionString = "mongodb+srv://harsha_2004:Vardhan1234@cluster0.zgjni4y.mongodb.net/?retryWrites=true&w=majority";
 
 mongoose
   .connect(mongoConnectionString, {
@@ -28,8 +28,7 @@ mongoose
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-// --------------------------deployment------------------------------
-
+// Deployment
 const path = require('path');
 const __dirname1 = path.resolve();
 
@@ -44,8 +43,6 @@ if (process.env.NODE_ENV === "production") {
     res.send("API is running..");
   });
 }
-
-// --------------------------deployment------------------------------
 
 const server = app.listen(process.env.PORT, () =>
   console.log(`Server started on ${process.env.PORT}`)
