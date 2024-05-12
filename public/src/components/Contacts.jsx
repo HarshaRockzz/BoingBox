@@ -6,17 +6,35 @@ export default function Contacts({ contacts, changeChat }) {
   const [currentUserName, setCurrentUserName] = useState(undefined);
   const [currentUserImage, setCurrentUserImage] = useState(undefined);
   const [currentSelected, setCurrentSelected] = useState(undefined);
-  useEffect(async () => {
-    const data = await JSON.parse(
-      localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
-    );
-    setCurrentUserName(data.username);
-    setCurrentUserImage(data.avatarImage);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const storedData = localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY);
+      if (storedData) {
+        try {
+          const data = JSON.parse(storedData);
+          if (data && data.username && data.avatarImage) {
+            setCurrentUserName(data.username);
+            setCurrentUserImage(data.avatarImage);
+          } else {
+            console.error("Invalid or incomplete data from localStorage");
+          }
+        } catch (error) {
+          console.error("Error parsing data from localStorage:", error);
+        }
+      } else {
+        console.error("No data found in localStorage");
+      }
+    };
+
+    fetchData();
   }, []);
+
   const changeCurrentChat = (index, contact) => {
     setCurrentSelected(index);
     changeChat(contact);
   };
+
   return (
     <>
       {currentUserImage && currentUserImage && (
@@ -64,6 +82,7 @@ export default function Contacts({ contacts, changeChat }) {
     </>
   );
 }
+
 const Container = styled.div`
   display: grid;
   grid-template-rows: 10% 75% 15%;
