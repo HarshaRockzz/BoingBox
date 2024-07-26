@@ -1,4 +1,4 @@
-export const host = "https://boingbox-1.onrender.com";
+export const host = "https://boingbox-1.onrender.com/";
 export const loginRoute = "https://boingbox-1.onrender.com/api/auth/login";
 export const registerRoute = "https://boingbox-1.onrender.com/api/auth/register";
 export const logoutRoute = "https://boingbox-1.onrender.com/api/auth/logout";
