@@ -1,0 +1,72 @@
+{
+  "short_name": "BoingBox",
+  "name": "BoingBox Chat Application",
+  "description": "A modern, feature-rich real-time chat application with voice/video calls, group management, and stories",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4f46e5",
+  "background_color": "#1e1b4b",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["social", "communication", "productivity"],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "screenshot2.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Chat",
+      "short_name": "Chat",
+      "description": "Start a new conversation",
+      "url": "/chat",
+      "icons": [
+        {
+          "src": "chat-icon.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Voice Call",
+      "short_name": "Call",
+      "description": "Start a voice call",
+      "url": "/call?type=voice",
+      "icons": [
+        {
+          "src": "call-icon.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}
