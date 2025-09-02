@@ -1,8 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const { createServer } = require('http');
-const { Server } = require('socket.io');
 const dotenv = require('dotenv');
 
 // Load environment variables
@@ -25,6 +23,8 @@ app.use((req, res, next) => {
 
 // Database connection
 let isConnected = false;
+let connectionAttempts = 0;
+const maxRetries = 3;
 
 const connectDB = async () => {
   try {
@@ -33,26 +33,63 @@ const connectDB = async () => {
       return;
     }
 
-    console.log('🔌 Attempting to connect to MongoDB...');
+    connectionAttempts++;
+    console.log(`🔌 Attempting to connect to MongoDB... (Attempt ${connectionAttempts}/${maxRetries})`);
     
-    await mongoose.connect(process.env.MONGODB_URI, {
+    // Enhanced connection options for better reliability
+    const connectionOptions = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-    });
+      serverSelectionTimeoutMS: 10000, // 10 seconds
+      socketTimeoutMS: 45000, // 45 seconds
+      bufferMaxEntries: 0,
+      bufferCommands: false,
+      maxPoolSize: 10,
+      minPoolSize: 5,
+      maxIdleTimeMS: 30000,
+      retryWrites: true,
+      w: 'majority'
+    };
+
+    await mongoose.connect(process.env.MONGODB_URI, connectionOptions);
 
     isConnected = true;
     console.log('✅ MongoDB Connection Successful');
-    console.log(`📊 Database: ${process.env.MONGODB_URI}`);
+    console.log(`📊 Database: ${process.env.MONGODB_URI.split('@')[1]?.split('?')[0] || 'Connected'}`);
+    
+    // Handle connection events
+    mongoose.connection.on('error', (err) => {
+      console.error('❌ MongoDB Connection Error:', err.message);
+      isConnected = false;
+    });
+
+    mongoose.connection.on('disconnected', () => {
+      console.log('⚠️ MongoDB Disconnected');
+      isConnected = false;
+    });
+
+    mongoose.connection.on('reconnected', () => {
+      console.log('✅ MongoDB Reconnected');
+      isConnected = true;
+    });
+
   } catch (error) {
     console.error('❌ MongoDB Connection Error:', error.message);
     console.log('🔧 Troubleshooting tips:');
-    console.log('- Check if MongoDB is running');
-    console.log('- Verify connection string in .env file');
-    console.log('- Ensure network connectivity');
-    console.log('- Check MongoDB Atlas IP whitelist if using cloud');
-    console.log(`- Current connection string: ${process.env.MONGODB_URI}`);
+    console.log('❌ MongoDB Connection Error: Could not connect to any servers in your MongoDB Atlas cluster. One common reason is that you\'re trying to access the database from an IP that isn\'t whitelisted. Make sure your current IP address is on your Atlas cluster\'s IP whitelist: https://docs.atlas.mongodb.com/security-whitelist/');
+    console.log('   - Check if MongoDB is running');
+    console.log('   - Verify connection string in .env file');
+    console.log('   - Ensure network connectivity');
+    console.log('   - Check MongoDB Atlas IP whitelist if using cloud');
+    console.log(`   - Current connection string: ${process.env.MONGODB_URI}`);
     console.log('⚠️ Server will start without database connection');
     console.log('⚠️ Some features may not work properly');
+    
+    // Retry connection if attempts < maxRetries
+    if (connectionAttempts < maxRetries) {
+      console.log(`🔄 Retrying connection in 5 seconds... (${connectionAttempts}/${maxRetries})`);
+      setTimeout(connectDB, 5000);
+    }
   }
 };
 
@@ -96,10 +133,47 @@ app.get('/health', (req, res) => {
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: 'BoingBox API Server',
+    message: '🚀 BoingBox API Server',
     version: '3.0.0',
     status: 'Running',
-    database: isConnected ? 'Connected' : 'Disconnected'
+    database: isConnected ? '✅ Connected' : '❌ Disconnected',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    deployment: 'Vercel/Render Serverless',
+    features: [
+      'Real-time Messaging',
+      'Group Management', 
+      'Stories & Status',
+      'Voice/Video Calls',
+      'PWA Support',
+      'Media Pipeline'
+    ],
+    availableRoutes: [
+      '/api/auth/login',
+      '/api/auth/register',
+      '/api/auth/setavatar',
+      '/api/auth/allusers',
+      '/api/messages/addmsg',
+      '/api/messages/getmsg',
+      '/api/messages/editmsg',
+      '/api/messages/deletemsg',
+      '/api/messages/reaction',
+      '/api/messages/markread',
+      '/api/groups/create',
+      '/api/groups/user/:userId',
+      '/api/groups/addmember',
+      '/api/groups/removemember',
+      '/api/groups/updaterole',
+      '/api/groups/invitelink',
+      '/api/stories/create',
+      '/api/stories/user/:userId',
+      '/api/stories/all/:userId',
+      '/api/stories/view',
+      '/api/stories/reply',
+      '/api/stories/delete'
+    ],
+    healthCheck: '/health',
+    documentation: 'https://github.com/HarshaRockzz/BoingBox'
   });
 });
 
@@ -119,110 +193,6 @@ app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Not Found',
     message: `Route ${req.originalUrl} not found`
-  });
-});
-
-// Create HTTP server
-const server = createServer(app);
-
-// Initialize Socket.IO
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
-    methods: ["GET", "POST"]
-  }
-});
-
-// Socket.IO connection handling
-io.on("connection", (socket) => {
-  console.log(`🔌 New client connected: ${socket.id}`);
-
-  // Add user to online users
-  socket.on("add-user", (userId) => {
-    global.onlineUsers.set(userId, socket.id);
-    console.log(`👤 User ${userId} added to online users`);
-  });
-
-  // Send message
-  socket.on("send-msg", (data) => {
-    const sendUserSocket = global.onlineUsers.get(data.to);
-    if (sendUserSocket) {
-      socket.to(sendUserSocket).emit("msg-receive", data.message);
-      console.log(`📤 Message sent to user ${data.to}`);
-    } else {
-      console.log(`⚠️ User ${data.to} is not online`);
-    }
-  });
-
-  // Typing indicator
-  socket.on("typing", (data) => {
-    const sendUserSocket = global.onlineUsers.get(data.to);
-    if (sendUserSocket) {
-      socket.to(sendUserSocket).emit("typing", data);
-    }
-  });
-
-  // Call signaling events
-  socket.on("call-request", (data) => {
-    const sendUserSocket = global.onlineUsers.get(data.to);
-    if (sendUserSocket) {
-      socket.to(sendUserSocket).emit("call-request", data);
-    }
-  });
-
-  socket.on("call-accepted", (data) => {
-    const sendUserSocket = global.onlineUsers.get(data.to);
-    if (sendUserSocket) {
-      socket.to(sendUserSocket).emit("call-accepted", data);
-    }
-  });
-
-  socket.on("call-rejected", (data) => {
-    const sendUserSocket = global.onlineUsers.get(data.to);
-    if (sendUserSocket) {
-      socket.to(sendUserSocket).emit("call-rejected", data);
-    }
-  });
-
-  socket.on("call-end", (data) => {
-    const sendUserSocket = global.onlineUsers.get(data.to);
-    if (sendUserSocket) {
-      socket.to(sendUserSocket).emit("call-end", data);
-    }
-  });
-
-  socket.on("call-ice-candidate", (data) => {
-    const sendUserSocket = global.onlineUsers.get(data.to);
-    if (sendUserSocket) {
-      socket.to(sendUserSocket).emit("call-ice-candidate", data);
-    }
-  });
-
-  socket.on("call-offer", (data) => {
-    const sendUserSocket = global.onlineUsers.get(data.to);
-    if (sendUserSocket) {
-      socket.to(sendUserSocket).emit("call-offer", data);
-    }
-  });
-
-  socket.on("call-answer-sdp", (data) => {
-    const sendUserSocket = global.onlineUsers.get(data.to);
-    if (sendUserSocket) {
-      socket.to(sendUserSocket).emit("call-answer-sdp", data);
-    }
-  });
-
-  // Disconnect
-  socket.on("disconnect", () => {
-    console.log(`🔌 Client disconnected: ${socket.id}`);
-    // Remove user from online users
-    for (let [userId, socketId] of global.onlineUsers.entries()) {
-      if (socketId === socket.id) {
-        global.onlineUsers.delete(userId);
-        console.log(`👤 User ${userId} removed from online users`);
-        break;
-      }
-    }
   });
 });
 
