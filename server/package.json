@@ -2,7 +2,7 @@
   "name": "boingbox-backend",
   "version": "3.0.0",
   "description": "Advanced Chat Application Backend - MERN Stack with WebRTC, PWA, and Media Pipeline",
-  "main": "index.js",
+  "main": "api/index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
