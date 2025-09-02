@@ -16,6 +16,7 @@ export default function Register() {
     password: "",
     confirmPassword: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const toastOptions = {
     position: "bottom-right",
@@ -76,16 +77,23 @@ export default function Register() {
     event.preventDefault();
     if (handleValidation()) {
       const { email, username, password } = values;
+      setIsLoading(true);
+      toast.info("Creating account... This may take a moment due to server cold start.", toastOptions);
+      
       try {
         const { data } = await axios.post(registerRoute, { username, email, password });
         if (data.status === false) {
           toast.error(data.msg, toastOptions);
         } else {
           localStorage.setItem(process.env.REACT_APP_LOCALHOST_KEY, JSON.stringify(data.user));
+          toast.success("Account created successfully!", toastOptions);
           navigate("/");
         }
       } catch (error) {
-        toast.error("An error occurred during registration. Please try again later.", toastOptions);
+        toast.error("Server is starting up... Please try again in a moment.", toastOptions);
+        console.error("Registration error:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -141,7 +149,9 @@ export default function Register() {
             />
             {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
           </div>
-          <button type="submit">Create User</button>
+          <button type="submit" disabled={isLoading}>
+            {isLoading ? "Creating Account..." : "Create User"}
+          </button>
           <span>
             Already have an account ? <Link to="/login">Login.</Link>
           </span>
