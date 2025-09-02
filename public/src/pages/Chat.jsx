@@ -39,8 +39,10 @@ export default function Chat() {
 
   useEffect(() => {
     if (currentUser) {
-      socket.current = io(host);
-      socket.current.emit("add-user", currentUser._id);
+      // Socket.IO temporarily disabled for serverless deployment
+      // socket.current = io(host);
+      // socket.current.emit("add-user", currentUser._id);
+      console.log("Socket.IO disabled - using HTTP polling for real-time features");
     }
   }, [currentUser]);
 
