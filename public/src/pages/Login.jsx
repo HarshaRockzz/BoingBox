@@ -12,6 +12,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [values, setValues] = useState({ username: "", password: "" });
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
   const toastOptions = {
     position: "bottom-right",
     autoClose: 8000,
@@ -67,6 +68,9 @@ export default function Login() {
     event.preventDefault();
     if (validateForm()) {
       const { username, password } = values;
+      setIsLoading(true);
+      toast.info("Logging in... This may take a moment due to server cold start.", toastOptions);
+      
       try {
         const { data } = await axios.post(loginRoute, { username, password });
         if (data.status === false) {
@@ -76,10 +80,14 @@ export default function Login() {
             process.env.REACT_APP_LOCALHOST_KEY,
             JSON.stringify(data.user)
           );
+          toast.success("Login successful!", toastOptions);
           navigate("/");
         }
       } catch (error) {
-        toast.error("An error occurred during login. Please try again later.", toastOptions);
+        toast.error("Server is starting up... Please try again in a moment.", toastOptions);
+        console.error("Login error:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -116,7 +124,9 @@ export default function Login() {
             />
             {errors.password && <span className="error-message">{errors.password}</span>}
           </div>
-          <button type="submit">Log In</button>
+          <button type="submit" disabled={isLoading}>
+            {isLoading ? "Logging in..." : "Log In"}
+          </button>
           <span>
             Don't have an account ? <Link to="/register">Create One.</Link>
           </span>
