@@ -180,7 +180,7 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('🚨 Server Error:', err.message);
-  console.error('📝 Stack:', err.stack);
+  console.error('�� Stack:', err.stack);
   
   res.status(500).json({
     error: 'Internal Server Error',
