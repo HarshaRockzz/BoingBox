@@ -1,4 +1,7 @@
-const host = process.env.REACT_APP_API_HOST || "http://localhost:5000";
+// Import environment configuration
+const config = require('../../vercel-env.js');
+
+const host = config.REACT_APP_API_URL || process.env.REACT_APP_API_URL || process.env.REACT_APP_API_HOST || "http://localhost:5000";
 
 // Auth routes
 export const loginRoute = `${host}/api/auth/login`;
